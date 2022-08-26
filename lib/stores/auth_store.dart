@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:territorio/models/auth_login_request.dart';
-
+import 'dart:developer' as dev;
 import 'package:territorio/services/auth_service.dart';
 import 'package:territorio/states/auth_state.dart';
 
@@ -52,7 +52,7 @@ class AuthStore extends ValueNotifier<AuthState> {
     try {
       await WriteCache.setJson(key: "user", value: loginUser.toJson());
     } catch (e) {
-      print("erro $e"); //Do something if error occurs
+      dev.log("erro $e"); //Do something if error occurs
     }
   }
 
@@ -73,7 +73,15 @@ class AuthStore extends ValueNotifier<AuthState> {
           default:
             value = ErrorAuthState("Erro ao fazer login - Contate Wenner!");
         }
+      } else {
+        dev.log("AQUI $e");
+        value = ErrorAuthState("Erro ao fazer login - Contate Wenner!");
       }
     }
+  }
+
+  void init() {
+    value = InitialAuthState();
+    notifyListeners();
   }
 }

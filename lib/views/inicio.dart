@@ -1,33 +1,90 @@
+import 'package:cache_manager/core/delete_cache_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/states/auth_state.dart';
 import 'package:territorio/stores/auth_store.dart';
-import 'package:territorio/views/mapa_view.dart';
+import '../models/auth_login_response.dart';
+import '../models/mapa.dart';
+import '../states/concluir_designacao_state.dart';
+import '../states/mapas_list_all_state.dart';
+import '../states/stateful_wrapper.dart';
+import '../stores/concluir_designacao_store.dart';
+import '../stores/designacao_add_store.dart';
+import '../stores/mapas_list_all_store.dart';
+import '../widgets/amplia_mapa.dart';
 
-class Inicio extends StatefulWidget {
+class Inicio extends StatelessWidget {
   const Inicio({Key? key}) : super(key: key);
 
   @override
-  InicioState createState() => InicioState();
-}
-
-class InicioState extends State<Inicio> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: ListView(
-      children: <Widget>[
-        header(context),
-        local(),
-        sectionMeuMapas(context),
-        sectionMapasTrabalhados(),
-      ],
-    ));
+    final mapaStoreList = Provider.of<MapasListAllStore>(context, listen: true);
+    final auth = context.watch<AuthStore>();
+    final loginResponse = (auth.value as SucessAuthState).authLoginResponse;
+    final concluirDesignacaoStore =
+        Provider.of<ConcluirDesignacaoStore>(context, listen: true);
+    return StatefulWrapper(
+        onInit: () {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            mapaStoreList.fetchListMapas(loginResponse.token,
+                idUser: loginResponse.idUser);
+          });
+        },
+        child: Scaffold(
+            body: SingleChildScrollView(
+          child: Column(
+            children: [
+              header(context),
+              local(context),
+              sectionMapasEmProgresso(context),
+              ValueListenableBuilder(
+                  valueListenable: mapaStoreList,
+                  builder: (context, state, child) {
+                    if (state is InitialMapasListAllState) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    if (state is LoadingMapasListAllState) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    if (state is ErrorMapasListAllState) {
+                      exibeMsgError(context, state.message);
+                      return const Text("erro");
+                    }
+                    if (state is SucessMapasListAllState) {
+                      final listMapas =
+                          (mapaStoreList.value as SucessMapasListAllState);
+                      return listMapas.mapas.isNotEmpty
+                          ? bodyMapaProgresso(
+                              listMapas,
+                              concluirDesignacaoStore,
+                              loginResponse,
+                              mapaStoreList)
+                          : SizedBox(
+                              height: 250,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const <Widget>[
+                                  Center(
+                                    child: Icon(Icons.branding_watermark),
+                                  ),
+                                  Divider(),
+                                  Center(
+                                    child: Text("Nenhum mapa escolhido"),
+                                  )
+                                ],
+                              ),
+                            );
+                    }
+                    return const Text("oi");
+                  })
+            ],
+          ),
+        )));
   }
 
   header(BuildContext context) {
@@ -46,8 +103,7 @@ class InicioState extends State<Inicio> {
       child: Stack(
         children: <Widget>[
           Container(
-            padding: const EdgeInsets.only(
-                top: 40.0, left: 35.0, right: 35.0, bottom: 5.0),
+            padding: const EdgeInsets.only(top: 40.0, left: 35.0, right: 35.0),
             child: Material(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0)),
@@ -132,52 +188,152 @@ class InicioState extends State<Inicio> {
       ),
     );
   }
+}
 
-  sectionMeuMapas(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Text(
-            "Meus mapas (Offline)",
-            style: Theme.of(context).textTheme.headline2,
-          ),
-          FlatButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const MapaView()));
-            },
-            child: Text(
-              "Escolher novo mapa",
-              style: Theme.of(context).textTheme.caption,
-            ),
-          )
-        ],
+sectionMapasEmProgresso(BuildContext context) {
+  return Container(
+    height: 35,
+    alignment: Alignment.center,
+    decoration: const BoxDecoration(color: Colors.white10),
+    child: Text(
+      "Mapas em Progresso",
+      style: TextStyle(
+        fontSize: 18,
+        color: Theme.of(context).primaryColorDark,
       ),
-    );
-  }
+    ),
+  );
+}
 
-  sectionMapasTrabalhados() {
-    return Container(
-        color: Colors.white,
-        padding: const EdgeInsets.only(left: 20.0, top: 20.0, bottom: 10.0),
-        child: Text("Mapas Designados",
-            style: Theme.of(context).textTheme.headline6));
-  }
+Widget bodyMapaProgresso(
+    SucessMapasListAllState listMapas,
+    ConcluirDesignacaoStore concluirDesignacaoStore,
+    AuthLoginResponse loginResponse,
+    MapasListAllStore mapaStoreList) {
+  return SizedBox(
+    height: 200,
+    child: ListView.builder(
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      scrollDirection: Axis.horizontal,
+      itemCount: listMapas.mapas.length,
+      itemBuilder: (context, index) {
+        Mapa mapa = listMapas.mapas[index];
+        //timestamp = snap.data.documents[index].data["timestamp"];
+        return Container(
+            margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 10.0),
+            width: 195.0,
+            height: 200.0,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            imagemAmpliada(context, mapa.nome, mapa.nome,
+                                mapa.urlMapa, "${mapa.numeroTerritorio}");
+                          },
+                          child: CachedNetworkImage(
+                            imageUrl: mapa.urlMapa,
+                            placeholder: (context, url) =>
+                                const LinearProgressIndicator(
+                                    color: Colors.black12,
+                                    backgroundColor: Colors.grey),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error),
+                          ),
+                        ))),
+                const SizedBox(
+                  height: 5.0,
+                ),
+                ListTile(
+                  subtitle: Text(
+                    "Território nº ${mapa.numeroTerritorio}",
+                    style: const TextStyle(color: Colors.black87, fontSize: 14),
+                  ),
+                  title: Text(mapa.nome,
+                      style: Theme.of(context).textTheme.subtitle1),
+                  leading: IconButton(
+                      color: Theme.of(context).primaryColor,
+                      icon: const Icon(
+                        Icons.cloud_download,
+                        size: 30,
+                      ),
+                      onPressed: () {
+                        concluirDesignacao(
+                            concluirDesignacaoStore,
+                            loginResponse,
+                            mapaStoreList,
+                            context,
+                            mapa.designacaoId);
+                      }),
+                )
+              ],
+            ));
+      },
+    ),
+  );
+}
 
-  Widget local() {
-    return ListTile(
-      title: Text(
-        "Coelho Neto - Ma",
-        style: TextStyle(
-          color: Theme.of(context).primaryColorDark,
-        ),
+void concluirDesignacao(
+    ConcluirDesignacaoStore concluirDesignacaoStore,
+    AuthLoginResponse loginResponse,
+    MapasListAllStore mapaStoreList,
+    BuildContext context,
+    int idDesignacao) async {
+  await concluirDesignacaoStore.fetchConcluirDesignacao(
+      idDesignacao, loginResponse.token);
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (concluirDesignacaoStore.value is ErrorConcluirDesignacaoState) {
+      final error =
+          (concluirDesignacaoStore.value as ErrorConcluirDesignacaoState)
+              .message;
+      exibeMsgError(context, error,
+          concluirDesignacaoStore: concluirDesignacaoStore);
+    }
+    if (concluirDesignacaoStore.value is SucessConcluirDesignacaoState) {}
+    mapaStoreList.fetchListMapas(loginResponse.token,
+        idUser: loginResponse.idUser);
+  });
+}
+
+Widget local(BuildContext context) {
+  return ListTile(
+    title: Text(
+      "Coelho Neto - Ma",
+      style: TextStyle(
+        color: Theme.of(context).primaryColorDark,
       ),
-      leading: Icon(Icons.location_on),
-      trailing: Text("Brasil"),
-      subtitle: Text("Congregação Central"),
-    );
+    ),
+    leading: const Icon(Icons.location_on),
+    trailing: GestureDetector(
+      onTap: () {},
+      child: const Text("Brasil"),
+    ),
+    subtitle: const Text("Congregação Central"),
+  );
+}
+
+void exibeMsgError(BuildContext context, String error,
+    {DesignacaoAddStore? designacaoAddStore,
+    ConcluirDesignacaoStore? concluirDesignacaoStore,
+    MapasListAllStore? mapaStoreList}) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(error),
+    duration: const Duration(seconds: 1),
+    action: SnackBarAction(
+      label: 'ok',
+      onPressed: () {},
+    ),
+  ));
+  if (error.contains("Sessão expirada ou não autorizado!")) {
+    DeleteCache.deleteKey("user");
+    Navigator.popUntil(context, ModalRoute.withName('/'));
+    designacaoAddStore!.init();
+    concluirDesignacaoStore?.init();
+    mapaStoreList!.init();
   }
 }

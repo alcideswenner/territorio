@@ -2,22 +2,27 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/services/auth_service.dart';
+import 'package:territorio/services/designacao_service.dart';
 import 'package:territorio/services/mapa_services.dart';
 import 'package:territorio/services/user_service.dart';
 import 'package:territorio/stores/auth_store.dart';
 import 'package:territorio/stores/check_box_value.dart';
+import 'package:territorio/stores/concluir_designacao_store.dart';
+import 'package:territorio/stores/designacao_add_store.dart';
 import 'package:territorio/stores/mapas_list_all_store.dart';
 import 'package:territorio/stores/user_add_store.dart';
 import 'package:territorio/stores/user_list_all_store.dart';
+import 'package:territorio/stores/user_remove_store.dart';
 import 'package:territorio/views/login_view.dart';
 
-void main() {
+void main() async {
   runApp(MultiProvider(
     providers: [
       Provider(create: (_) => Dio()),
       Provider(create: (context) => AuthService(context.read())),
       Provider(create: (context) => UserService(context.read())),
       Provider(create: (context) => MapaServices(context.read())),
+      Provider(create: (context) => DesignacaoServices(context.read())),
       ChangeNotifierProvider(create: ((context) => CheckBoxValue())),
       ChangeNotifierProvider(
         create: (context) => UserAddStore(context.read()),
@@ -30,6 +35,15 @@ void main() {
       ),
       ChangeNotifierProvider(
         create: (context) => MapasListAllStore(context.read()),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => UserRemoveStore(context.read()),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => DesignacaoAddStore(context.read()),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => ConcluirDesignacaoStore(context.read()),
       ),
     ],
     child: MaterialApp(

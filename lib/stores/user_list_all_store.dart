@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:territorio/models/user.dart';
 import 'package:territorio/services/user_service.dart';
 import 'dart:developer' as dev;
-
 import 'package:territorio/states/user_list_all_state.dart';
 
 class UserListAllStore extends ValueNotifier<UserListAllState> {

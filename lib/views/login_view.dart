@@ -1,5 +1,4 @@
 import 'package:cache_manager/core/read_cache_service.dart';
-import 'package:date_format/date_format.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -7,7 +6,6 @@ import 'package:territorio/models/auth_login_request.dart';
 import 'package:territorio/states/auth_state.dart';
 import 'package:territorio/stores/auth_store.dart';
 import 'package:territorio/views/home.dart';
-
 import '../models/auth_login_response.dart';
 import '../states/stateful_wrapper.dart';
 
@@ -53,13 +51,12 @@ class LoginView extends StatelessWidget {
         child: StatefulWrapper(
           onInit: () {
             WidgetsBinding.instance.addPostFrameCallback((_) async {
+              storeAuth.init();
               await ReadCache.getJson(key: "user")
                   .then((value) => {
                         if (DateTime.fromMillisecondsSinceEpoch(
                                 int.parse(value["teste"].toString()))
-                            .isBefore(DateTime.now()))
-                          {}
-                        else
+                            .isAfter(DateTime.now()))
                           {
                             storeAuth
                                 .loginCache(AuthLoginResponse.fromJson(value))
@@ -96,7 +93,10 @@ class LoginView extends StatelessWidget {
                     return main(storeAuth, context);
                   }
                   if (state is SucessAuthState) {
-                    carregaTelaHome(context);
+                    carregaTelaHome(context, storeAuth);
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
                   }
                   return main(storeAuth, context);
                 }),
@@ -252,13 +252,14 @@ class LoginView extends StatelessWidget {
           onPressed: () {},
         ),
       ));
+      authStore.init();
     });
   }
 
-  void carregaTelaHome(BuildContext context) {
+  void carregaTelaHome(BuildContext context, AuthStore storeAuth) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const Home()));
+          .push(MaterialPageRoute(builder: (context) => Home()));
     });
   }
 }

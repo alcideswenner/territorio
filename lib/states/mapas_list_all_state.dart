@@ -1,5 +1,4 @@
 import 'package:territorio/models/mapa.dart';
-import 'package:territorio/models/user.dart';
 
 abstract class MapasListAllState {}
 

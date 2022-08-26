@@ -5,6 +5,7 @@ class AuthLoginResponse {
   String? _token;
   String? _username;
   List? _roles;
+  int? _idUser;
 
   AuthLoginResponse(
       {required String validUntil,
@@ -12,12 +13,14 @@ class AuthLoginResponse {
       required String validFrom,
       required String token,
       required String username,
-      required List roles}) {
+      required List roles,
+      required int idUser}) {
     _validUntil = validUntil;
     _validFrom = validFrom;
     _token = token;
     _username = username;
     _roles = roles;
+    _idUser = idUser;
   }
 
   String get teste => _teste!;
@@ -38,6 +41,9 @@ class AuthLoginResponse {
   List get roles => _roles!;
   set roles(List roles) => _roles = roles;
 
+  int get idUser => _idUser!;
+  set idUser(int idUser) => _idUser = idUser;
+
   AuthLoginResponse.fromJson(Map<String, dynamic> json) {
     _validUntil = json['validUntil'];
     _teste = json['teste'];
@@ -45,6 +51,7 @@ class AuthLoginResponse {
     _token = json['token'];
     _username = json["username"];
     _roles = json["roles"];
+    _idUser = json["idUser"];
   }
 
   Map<String, dynamic> toJson() {
@@ -55,6 +62,7 @@ class AuthLoginResponse {
     data['token'] = _token;
     data['username'] = _username;
     data['roles'] = _roles;
+    data['idUser'] = _idUser;
     return data;
   }
 }

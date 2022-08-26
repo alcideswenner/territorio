@@ -18,4 +18,14 @@ class UserService {
     final list = response.data as List;
     return list.map((e) => User.fromJson(e)).toList();
   }
+
+  Future<int> fetchRemoveUser(int id, String token) async {
+    final response = await dio.delete(
+        "https://territorio-api.herokuapp.com/users/$id",
+        options: Options(headers: {"Authorization": "Bearer $token"}));
+    if (response.statusCode == 200) {
+      return 1;
+    }
+    return 0;
+  }
 }

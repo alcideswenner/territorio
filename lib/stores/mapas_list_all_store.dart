@@ -9,10 +9,10 @@ class MapasListAllStore extends ValueNotifier<MapasListAllState> {
 
   MapasListAllStore(this.mapaServices) : super(InitialMapasListAllState());
 
-  Future fetchListMapas(String token) async {
+  Future fetchListMapas(String token, {int? idUser}) async {
     value = LoadingMapasListAllState();
     try {
-      final listMapas = await mapaServices.fetchListMapas(token);
+      var listMapas = await mapaServices.fetchListMapas(token, idUser);
       value = SucessMapasListAllState(listMapas);
       notifyListeners();
     } catch (e) {
@@ -20,6 +20,10 @@ class MapasListAllStore extends ValueNotifier<MapasListAllState> {
         switch (e.response!.statusCode) {
           case 401:
             value = ErrorMapasListAllState("Não autorizado!");
+            break;
+          case 403:
+            value =
+                ErrorMapasListAllState("Sessão expirada ou não autorizado!");
             break;
           case 500:
             value = ErrorMapasListAllState("Erro no sistema!");

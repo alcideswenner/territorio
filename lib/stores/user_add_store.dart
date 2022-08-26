@@ -23,6 +23,9 @@ class UserAddStore extends ValueNotifier<UserAddState> {
           case 401:
             value = ErrorUserAddState("Não autorizado!");
             break;
+          case 403:
+            value = ErrorUserAddState("Sessão expirada ou não autorizado!");
+            break;
           case 500:
             value = ErrorUserAddState("Erro no sistema!");
             break;

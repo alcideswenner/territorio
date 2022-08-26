@@ -1,4 +1,3 @@
-import 'package:alert_dialog/alert_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/models/auth_login_response.dart';
@@ -8,7 +7,6 @@ import 'package:territorio/states/user_add_state.dart';
 import 'package:territorio/stores/auth_store.dart';
 import 'package:territorio/stores/check_box_value.dart';
 import 'package:territorio/stores/user_add_store.dart';
-import 'package:territorio/stores/user_list_all_store.dart';
 import 'package:territorio/views/user_view.dart';
 import '../states/auth_state.dart';
 

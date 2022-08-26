@@ -3,61 +3,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/stores/auth_store.dart';
+import 'package:territorio/stores/changed_page_value.dart';
+import 'package:territorio/views/mapa_view.dart';
 import 'package:territorio/views/user_view.dart';
 import 'package:territorio/views/inicio.dart';
 
 import '../states/auth_state.dart';
+import '../states/stateful_wrapper.dart';
 
-class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+class Home extends StatelessWidget {
+  final pageController = PageController();
 
-  @override
-  HomeState createState() => HomeState();
-}
-
-class HomeState extends State<Home> {
-  PageController? pageController;
-  int pageIndex = 0;
-
-  @override
-  void initState() {
-    pageController = PageController();
-    super.initState();
-    pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    pageController!.dispose();
-    super.dispose();
-  }
+  Home({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: SystemUiOverlay.values);
+    final pageState = ChangedPageValue();
     return WillPopScope(
-      // ignore: sort_child_properties_last
-      child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.map),
-          onPressed: () {},
-        ),
-        appBar: appBar(),
-        body: PageView(
-          controller: pageController,
-          onPageChanged: onPageChanged,
-          physics: const NeverScrollableScrollPhysics(),
-          children: const <Widget>[Inicio(), Inicio()],
-        ),
-        bottomNavigationBar: CupertinoTabBar(
-          currentIndex: pageIndex,
-          onTap: onTap,
-          activeColor: Theme.of(context).primaryColor,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home)),
-            BottomNavigationBarItem(icon: Icon(Icons.history)),
-          ],
+      child: StatefulWrapper(
+        onInit: () {
+          WidgetsBinding.instance.addPostFrameCallback((_) {});
+        },
+        child: Scaffold(
+          appBar: appBar(context),
+          body: PageView(
+            controller: pageController,
+            onPageChanged: pageState.setValue,
+            physics: const NeverScrollableScrollPhysics(),
+            children: const <Widget>[Inicio(), MapaView()],
+          ),
+          bottomNavigationBar: ValueListenableBuilder(
+              valueListenable: pageState,
+              builder: (context, state, child) {
+                return CupertinoTabBar(
+                  currentIndex: pageState.value,
+                  onTap: onTap,
+                  activeColor: Theme.of(context).primaryColor,
+                  items: const [
+                    BottomNavigationBarItem(icon: Icon(Icons.home)),
+                    BottomNavigationBarItem(icon: Icon(Icons.map)),
+                  ],
+                );
+              }),
         ),
       ),
       onWillPop: () async {
@@ -74,6 +63,7 @@ class HomeState extends State<Home> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context, true);
+                    SystemNavigator.pop();
                   },
                   child: const Text('Sim'),
                 ),
@@ -92,21 +82,15 @@ class HomeState extends State<Home> {
     );
   }
 
-  onPageChanged(int pageIndex) {
-    setState(() {
-      this.pageIndex = pageIndex;
-    });
-  }
-
   onTap(int pageIndex) {
-    pageController!.animateToPage(pageIndex,
+    pageController.animateToPage(pageIndex,
         duration: const Duration(
           milliseconds: 200,
         ),
         curve: Curves.easeInOut);
   }
 
-  AppBar appBar() {
+  AppBar appBar(BuildContext context) {
     final auth = context.watch<AuthStore>();
     final loginResponse = (auth.value as SucessAuthState).authLoginResponse;
     return AppBar(
