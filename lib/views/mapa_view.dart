@@ -293,17 +293,6 @@ class MapaView extends StatelessWidget {
                               : "Mapa indisponível",
                       style: const TextStyle(color: Colors.white),
                     ),
-                  ),
-                  TextButton(
-                    style: TextButton.styleFrom(
-                        padding: const EdgeInsets.all(10.0)),
-                    onPressed: () {},
-                    child: Row(
-                      children: const <Widget>[
-                        Icon(Icons.description),
-                        Text("Anotações")
-                      ],
-                    ),
                   )
                 ],
               ),

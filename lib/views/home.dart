@@ -120,8 +120,7 @@ class Home extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (context) => const UserView()));
                 })
-            : const SizedBox(),
-        IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+            : const SizedBox()
       ],
     );
   }
