@@ -7,6 +7,7 @@ class Mapa {
   String? _msgDataCarencia;
   int? _userAtual;
   int? _designacaoId;
+  String? _urlGoogleMaps;
 
   Mapa(
       {required int id,
@@ -16,7 +17,8 @@ class Mapa {
       required bool status,
       required String msgDataCarencia,
       required int userAtual,
-      required int designacaoId}) {
+      required int designacaoId,
+      required String urlGoogleMaps}) {
     _id = id;
     _urlMapa = urlMapa;
     _nome = nome;
@@ -25,6 +27,7 @@ class Mapa {
     _msgDataCarencia = msgDataCarencia;
     _userAtual = userAtual;
     _designacaoId = designacaoId;
+    _urlGoogleMaps = urlGoogleMaps;
   }
 
   Mapa.id({required int? id}) {
@@ -53,6 +56,9 @@ class Mapa {
   int get designacaoId => _designacaoId!;
   set designacaoId(int designacaoId) => _designacaoId = designacaoId;
 
+  String get urlGoogleMaps => _urlGoogleMaps!;
+  set urlGoogleMaps(String urlGoogleMaps) => _urlGoogleMaps = urlGoogleMaps;
+
   Mapa.fromJson(Map<String, dynamic> json) {
     _id = json['id'];
     _urlMapa = json['urlMapa'];
@@ -62,6 +68,7 @@ class Mapa {
     _status = json['status'];
     _userAtual = json['userAtual'];
     _designacaoId = json['designacaoId'];
+    _urlGoogleMaps = json['urlGoogleMaps'];
   }
 
   Map<String, dynamic> toJson() {
@@ -74,6 +81,7 @@ class Mapa {
     data['status'] = _status;
     data['userAtual'] = _userAtual;
     data['designacaoId'] = _designacaoId;
+    data['urlGoogleMaps'] = _urlGoogleMaps;
     return data;
   }
 }

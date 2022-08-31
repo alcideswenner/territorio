@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:cache_manager/core/delete_cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/models/auth_login_response.dart';
 import 'package:territorio/models/mapa.dart';
@@ -7,9 +12,11 @@ import 'package:territorio/states/concluir_designacao_state.dart';
 import 'package:territorio/states/designacao_add_state.dart';
 import 'package:territorio/states/mapas_list_all_state.dart';
 import 'package:territorio/states/stateful_wrapper.dart';
+import 'package:territorio/stores/changed_value_drop.dart';
 import 'package:territorio/stores/concluir_designacao_store.dart';
 import 'package:territorio/stores/designacao_add_store.dart';
 import 'package:territorio/widgets/amplia_mapa.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/designacao.dart';
 import '../models/user.dart';
@@ -29,10 +36,11 @@ class MapaView extends StatelessWidget {
         Provider.of<DesignacaoAddStore>(context, listen: true);
     final concluirDesignacaoStore =
         Provider.of<ConcluirDesignacaoStore>(context, listen: true);
-
+    final changedValueDrop = ChangedValueDrop();
     return StatefulWrapper(
       onInit: () {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          changedValueDrop.init();
           mapaStoreList.fetchListMapas(loginResponse.token);
         });
       },
@@ -56,14 +64,21 @@ class MapaView extends StatelessWidget {
                 return const Text("erro");
               }
               if (state is SucessMapasListAllState) {
-                return main(mapaStoreList, context, designacaoAddStore,
-                    loginResponse, mapaStoreList, concluirDesignacaoStore);
+                return main(
+                    mapaStoreList,
+                    context,
+                    designacaoAddStore,
+                    loginResponse,
+                    mapaStoreList,
+                    concluirDesignacaoStore,
+                    changedValueDrop);
               }
               return const Text("oi");
             }),
         backgroundColor: Colors.white,
         floatingActionButton: FloatingActionButton(
           onPressed: () {
+            changedValueDrop.init();
             mapaStoreList.fetchListMapas(loginResponse.token);
           },
           child: const Icon(Icons.refresh),
@@ -78,21 +93,71 @@ class MapaView extends StatelessWidget {
       DesignacaoAddStore designacaoAddStore,
       AuthLoginResponse loginResponse,
       MapasListAllStore mapaStoreList,
-      ConcluirDesignacaoStore concluirDesignacaoStore) {
+      ConcluirDesignacaoStore concluirDesignacaoStore,
+      ChangedValueDrop changedValueDrop) {
     final listMapas = (mapasListAllState.value as SucessMapasListAllState);
-    return ListView.separated(
-      itemCount: listMapas.mapas.length,
-      itemBuilder: (context, index) {
-        Mapa mapa = listMapas.mapas[index];
-        return cardMapa(mapa, context, designacaoAddStore, loginResponse,
-            mapaStoreList, concluirDesignacaoStore);
-      },
-      separatorBuilder: (BuildContext context, int index) {
-        return Container(
-          height: 3,
-          color: Colors.black12,
-        );
-      },
+
+    return Column(
+      children: [
+        Container(
+            width: MediaQuery.of(context).size.width,
+            padding: const EdgeInsets.only(left: 20, bottom: 10),
+            decoration:
+                const BoxDecoration(color: Color.fromARGB(255, 27, 96, 160)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Filtrar por bairro",
+                  style: TextStyle(color: Colors.white),
+                ),
+                ValueListenableBuilder(
+                    valueListenable: changedValueDrop,
+                    builder: (context, state, child) {
+                      return DropdownButton(
+                          dropdownColor: const Color.fromARGB(255, 27, 96, 160),
+                          focusColor: Colors.white,
+                          style: const TextStyle(color: Colors.white),
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          value: changedValueDrop.value,
+                          items: changedValueDrop.items.map((String items) {
+                            return DropdownMenuItem(
+                              value: items,
+                              child: Text(items),
+                            );
+                          }).toList(),
+                          onChanged: (String? val) async {
+                            await changedValueDrop.setValue(val);
+                            if (val!.contains("Todos os Mapas")) {
+                              mapaStoreList.fetchListMapas(loginResponse.token);
+                            } else {
+                              mapaStoreList.fetchListMapas(loginResponse.token,
+                                  bairro: val.toString());
+                            }
+
+                            await changedValueDrop.setValue(val);
+                          });
+                    })
+              ],
+            )),
+        Expanded(
+          child: ListView.separated(
+            itemCount: listMapas.mapas.length,
+            itemBuilder: (context, index) {
+              Mapa mapa = listMapas.mapas[index];
+              return cardMapa(mapa, context, designacaoAddStore, loginResponse,
+                  mapaStoreList, concluirDesignacaoStore);
+            },
+            separatorBuilder: (BuildContext context, int index) {
+              return Container(
+                height: 3,
+                color: Colors.black12,
+              );
+            },
+          ),
+        )
+      ],
     );
   }
 
@@ -209,7 +274,9 @@ class MapaView extends StatelessWidget {
                             loginResponse,
                             item.designacaoId,
                             mapaStoreList,
-                            context);
+                            context,
+                            item.numeroTerritorio,
+                            item.urlMapa);
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -251,6 +318,14 @@ class MapaView extends StatelessWidget {
                   ))
                 ],
               ),
+              TextButton(
+                  onPressed: () {
+                    abrirGoogleMaps(item.urlGoogleMaps);
+                  },
+                  child: const Text(
+                    "Abrir no Google Maps",
+                    style: TextStyle(fontSize: 15, color: Colors.blue),
+                  ))
             ],
           ),
         ),
@@ -292,6 +367,12 @@ class MapaView extends StatelessWidget {
         onPressed: () {},
       ),
     ));
+    if (error.contains("Sessão expirada ou não autorizado!")) {
+      DeleteCache.deleteKey("user");
+      Navigator.popUntil(context, ModalRoute.withName('/'));
+      concluirDesignacaoStore!.init();
+      /*  Navigator.of(context).popAndPushNamed("/"); */
+    }
   }
 
   void exibeMsg(
@@ -312,7 +393,9 @@ class MapaView extends StatelessWidget {
       AuthLoginResponse loginResponse,
       int id,
       MapasListAllStore mapaStoreList,
-      BuildContext context) async {
+      BuildContext context,
+      int numeroTerritorio,
+      String urlMapa) async {
     await concluirDesignacaoStore.fetchConcluirDesignacao(
         id, loginResponse.token);
 
@@ -324,8 +407,30 @@ class MapaView extends StatelessWidget {
         exibeMsgError(context, error,
             concluirDesignacaoStore: concluirDesignacaoStore);
       }
-      if (concluirDesignacaoStore.value is SucessConcluirDesignacaoState) {}
+      if (concluirDesignacaoStore.value is SucessConcluirDesignacaoState) {
+        //salvarMapasLocais(urlMapa, numeroTerritorio);
+      }
       mapaStoreList.fetchListMapas(loginResponse.token);
     });
   }
+
+  abrirGoogleMaps(String urlGoogleMaps) async {
+    final Uri url = Uri.parse(urlGoogleMaps);
+    if (!await launchUrl(url)) {
+      throw 'Could not launch $url';
+    }
+  }
+
+/*   void salvarMapasLocais(String linkImage, int numTerritorio) async {
+    var tempDir = await getApplicationDocumentsDirectory();
+    final dio = Dio();
+    final response = await dio.get(linkImage,
+        options:
+            Options(responseType: ResponseType.bytes, followRedirects: false));
+
+    final nmImage = '${tempDir.path}/mapa-$numTerritorio.png';
+    File file = File(nmImage);
+    var raf = file.openSync(mode: FileMode.write);
+    raf.writeFromSync(response.data);
+  } */
 }

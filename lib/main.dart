@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/services/auth_service.dart';
 import 'package:territorio/services/designacao_service.dart';
@@ -10,12 +12,20 @@ import 'package:territorio/stores/check_box_value.dart';
 import 'package:territorio/stores/concluir_designacao_store.dart';
 import 'package:territorio/stores/designacao_add_store.dart';
 import 'package:territorio/stores/mapas_list_all_store.dart';
+import 'package:territorio/stores/ranking_bairro_mais_trabalhado_store.dart';
 import 'package:territorio/stores/user_add_store.dart';
 import 'package:territorio/stores/user_list_all_store.dart';
 import 'package:territorio/stores/user_remove_store.dart';
 import 'package:territorio/views/login_view.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  if (await Permission.mediaLibrary.request().isGranted) {
+    print("aceitou");
+  } else {
+    print("nem ligou");
+  }
   runApp(MultiProvider(
     providers: [
       Provider(create: (_) => Dio()),
@@ -44,6 +54,9 @@ void main() async {
       ),
       ChangeNotifierProvider(
         create: (context) => ConcluirDesignacaoStore(context.read()),
+      ),
+      ChangeNotifierProvider(
+        create: (context) => RankingBairroMaisTrabalhadoStore(context.read()),
       ),
     ],
     child: MaterialApp(

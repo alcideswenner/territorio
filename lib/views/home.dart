@@ -1,3 +1,5 @@
+import 'package:cache_manager/core/delete_cache_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +26,9 @@ class Home extends StatelessWidget {
     return WillPopScope(
       child: StatefulWrapper(
         onInit: () {
-          WidgetsBinding.instance.addPostFrameCallback((_) {});
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            FirebaseMessaging.instance.subscribeToTopic("all");
+          });
         },
         child: Scaffold(
           appBar: appBar(context),
@@ -94,11 +98,19 @@ class Home extends StatelessWidget {
     final auth = context.watch<AuthStore>();
     final loginResponse = (auth.value as SucessAuthState).authLoginResponse;
     return AppBar(
+      elevation: 0,
       automaticallyImplyLeading: false,
       title: const Text("Território Central"),
       actions: <Widget>[
+        IconButton(
+            onPressed: () {
+              Navigator.popUntil(context, ModalRoute.withName('/'));
+              DeleteCache.deleteKey("user");
+            },
+            icon: const Icon(Icons.exit_to_app_sharp)),
         loginResponse.roles
-                .where((element) => element.contains("SYSTEM"))
+                .where((element) =>
+                    element.contains("SYSTEM") || element.contains("ADMIN"))
                 .isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.person),

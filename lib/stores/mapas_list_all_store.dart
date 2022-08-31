@@ -9,10 +9,10 @@ class MapasListAllStore extends ValueNotifier<MapasListAllState> {
 
   MapasListAllStore(this.mapaServices) : super(InitialMapasListAllState());
 
-  Future fetchListMapas(String token, {int? idUser}) async {
+  Future fetchListMapas(String token, {int? idUser, String? bairro}) async {
     value = LoadingMapasListAllState();
     try {
-      var listMapas = await mapaServices.fetchListMapas(token, idUser);
+      var listMapas = await mapaServices.fetchListMapas(token, idUser, bairro);
       value = SucessMapasListAllState(listMapas);
       notifyListeners();
     } catch (e) {

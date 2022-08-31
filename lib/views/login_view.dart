@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:cache_manager/core/read_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/models/auth_login_request.dart';
 import 'package:territorio/states/auth_state.dart';
 import 'package:territorio/stores/auth_store.dart';
+import 'package:territorio/stores/see_password_store.dart';
 import 'package:territorio/views/home.dart';
 import '../models/auth_login_response.dart';
 import '../states/stateful_wrapper.dart';
@@ -94,9 +98,6 @@ class LoginView extends StatelessWidget {
                   }
                   if (state is SucessAuthState) {
                     carregaTelaHome(context, storeAuth);
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
                   }
                   return main(storeAuth, context);
                 }),
@@ -144,35 +145,45 @@ class LoginView extends StatelessWidget {
   }
 
   Widget textSenha(BuildContext context) {
+    final see_password_store = SeePasswordStore();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Material(
-        elevation: 0.0,
-        borderRadius: const BorderRadius.all(Radius.circular(20)),
-        child: TextFormField(
-          style: Theme.of(context).textTheme.headline2,
-          autovalidateMode: AutovalidateMode.always,
-          toolbarOptions: const ToolbarOptions(
-              copy: true, cut: false, paste: true, selectAll: true),
-          controller: senha,
-          obscureText: true,
-          onChanged: (String value) {},
-          cursorColor: Colors.deepOrange,
-          decoration: InputDecoration(
-              hintText: "Senha",
-              prefixIcon: Material(
-                elevation: 0,
-                borderRadius: const BorderRadius.all(Radius.circular(30)),
-                child: Icon(
-                  Icons.lock,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 25, vertical: 20)),
-        ),
-      ),
+          elevation: 0.0,
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+          child: ValueListenableBuilder(
+            builder: ((context, value, child) {
+              return TextFormField(
+                style: Theme.of(context).textTheme.headline2,
+                autovalidateMode: AutovalidateMode.always,
+                toolbarOptions: const ToolbarOptions(
+                    copy: true, cut: false, paste: true, selectAll: true),
+                controller: senha,
+                obscureText: see_password_store.value,
+                onChanged: (String value) {},
+                cursorColor: Colors.deepOrange,
+                decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                        onPressed: see_password_store.setValue,
+                        icon: see_password_store.value
+                            ? const Icon(Icons.visibility)
+                            : const Icon(Icons.visibility_off)),
+                    hintText: "Senha",
+                    prefixIcon: Material(
+                      elevation: 0,
+                      borderRadius: const BorderRadius.all(Radius.circular(30)),
+                      child: Icon(
+                        Icons.lock,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 25, vertical: 20)),
+              );
+            }),
+            valueListenable: see_password_store,
+          )),
     );
   }
 
@@ -258,8 +269,14 @@ class LoginView extends StatelessWidget {
 
   void carregaTelaHome(BuildContext context, AuthStore storeAuth) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => Home()));
+      if (storeAuth.value is SucessAuthState) {
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (context) => Home()));
+      }
     });
   }
+/* 
+  Widget graficoBairroMaisTrabalhado() {
+    return ValueListenableBuilder(valueListenable: valueListenable, builder: builder)
+  } */
 }

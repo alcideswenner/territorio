@@ -9,6 +9,7 @@ import 'package:territorio/stores/user_remove_store.dart';
 import 'package:territorio/views/user_add_view.dart';
 
 import '../states/auth_state.dart';
+import '../states/user_remove_state.dart';
 import '../stores/auth_store.dart';
 
 class UserView extends StatelessWidget {
@@ -95,7 +96,12 @@ class UserView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(listUsers.users[index].username.toString())
+                      Text(listUsers.users[index].username.toString()),
+                      Text(
+                        listUsers.users[index].username.toString(),
+                        style: const TextStyle(
+                            color: Colors.black54, fontSize: 12),
+                      )
                     ],
                   ),
                 )),
@@ -109,17 +115,29 @@ class UserView extends StatelessWidget {
                           onPressed: () {
                             userStoreRemove.fetchRemoveUser(
                                 listUsers.users[index].id, loginResponse.token);
+                            if (userStoreRemove.value is ErrorUserRemoveState) {
+                              exibeMsgError(
+                                  context,
+                                  (userStoreRemove.value
+                                          as ErrorUserRemoveState)
+                                      .message,
+                                  userStoreList);
+                            } else if (userStoreRemove.value
+                                is SucessUserRemoveState) {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(SnackBar(
+                                content: const Text("Removido com sucesso"),
+                                duration: const Duration(seconds: 1),
+                                action: SnackBarAction(
+                                  label: 'ok',
+                                  onPressed: () {},
+                                ),
+                              ));
+                            }
                             userStoreList.fetchListUsers(loginResponse.token);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: const Text("Removido com sucesso"),
-                              duration: const Duration(seconds: 1),
-                              action: SnackBarAction(
-                                label: 'ok',
-                                onPressed: () {},
-                              ),
-                            ));
                           },
-                          icon: const Icon(Icons.delete))
+                          icon: const Icon(Icons.delete)),
+                      IconButton(onPressed: () {}, icon: const Icon(Icons.edit))
                     ],
                   ),
                 ),
@@ -135,7 +153,8 @@ class UserView extends StatelessWidget {
   }
 
   void exibeMsgError(
-      BuildContext context, String mensagem, UserListAllStore userStoreList) {
+      BuildContext context, String mensagem, UserListAllStore userStoreList,
+      {UserRemoveStore? userRemoveStore}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(mensagem),
@@ -145,10 +164,12 @@ class UserView extends StatelessWidget {
           onPressed: () {},
         ),
       ));
+      userRemoveStore?.init();
+      userStoreList.init();
       if (mensagem.contains("Sessão expirada ou não autorizado!")) {
         DeleteCache.deleteKey("user");
         Navigator.popUntil(context, ModalRoute.withName('/'));
-        userStoreList.value = InitialUserListAllState();
+        userStoreList.init();
         /*  Navigator.of(context).popAndPushNamed("/"); */
       }
     });

@@ -1,3 +1,4 @@
+import 'package:cache_manager/core/delete_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/models/auth_login_response.dart';
@@ -43,7 +44,7 @@ class UserAddView extends StatelessWidget {
             }
 
             if (state is ErrorUserAddState) {
-              exibeMsgError(context, state.message);
+              exibeMsgError(context, state.message, storeUserAdd);
               return form(
                 checkBoxValue,
                 loginResponse,
@@ -185,7 +186,8 @@ class UserAddView extends StatelessWidget {
     );
   }
 
-  void exibeMsgError(BuildContext context, String mensagem) {
+  void exibeMsgError(
+      BuildContext context, String mensagem, UserAddStore storeUserAdd) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(mensagem),
@@ -195,6 +197,11 @@ class UserAddView extends StatelessWidget {
           onPressed: () {},
         ),
       ));
+      if (mensagem.contains("Sessão expirada ou não autorizado!")) {
+        DeleteCache.deleteKey("user");
+        Navigator.popUntil(context, ModalRoute.withName('/'));
+        storeUserAdd.init();
+      }
     });
   }
 
