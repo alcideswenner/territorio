@@ -241,8 +241,13 @@ class Inicio extends StatelessWidget {
                           borderRadius: BorderRadius.circular(5.0),
                           child: GestureDetector(
                             onTap: () {
-                              imagemAmpliada(context, mapa.nome, mapa.nome,
-                                  mapa.urlMapa, "${mapa.numeroTerritorio}");
+                              imagemAmpliada(
+                                  context,
+                                  mapa.nome,
+                                  mapa.nome,
+                                  mapa.urlMapa,
+                                  "${mapa.numeroTerritorio}",
+                                  mapa.urlGoogleMaps);
                             },
                             child: CachedNetworkImage(
                               imageUrl: mapa.urlMapa,

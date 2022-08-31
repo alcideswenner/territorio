@@ -182,8 +182,13 @@ class MapaView extends StatelessWidget {
                 children: <Widget>[
                   GestureDetector(
                     onTap: () async {
-                      imagemAmpliada(context, item.nome, item.nome,
-                          item.urlMapa, "${item.numeroTerritorio}");
+                      imagemAmpliada(
+                          context,
+                          item.nome,
+                          item.nome,
+                          item.urlMapa,
+                          "${item.numeroTerritorio}",
+                          item.urlGoogleMaps);
                     },
                     child: CachedNetworkImage(
                       imageUrl: item.urlMapa,

@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 imagemAmpliada(BuildContext context, String titulo, String bairro,
-    String linkImage, String numeroTerritorio) {
+    String linkImage, String numeroTerritorio, String urlGoogleMapas) {
   showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -41,8 +41,8 @@ imagemAmpliada(BuildContext context, String titulo, String bairro,
                       color: Colors.white,
                       icon: const Icon(Icons.share),
                       onPressed: () {
-                        compartilhaImagemTexto(
-                            titulo, bairro, linkImage, numeroTerritorio, "");
+                        compartilhaImagemTexto(titulo, bairro, linkImage,
+                            numeroTerritorio, urlGoogleMapas);
                       },
                     ),
                     const SizedBox(width: 10.0),
@@ -63,7 +63,7 @@ void compartilhaImagemTexto(String titulo, String bairro, String linkImage,
   try {
     var texto =
         """Prezado irmão, segue os dados do território a ser trabalhado:\n\nNúmero do território: $numeroTerritorio
-      \nBairro: $bairro. \n\nCaso queira mais informações sobre o território, clique no link que redirecionará ao google maps. \n$urlGoogleMapas""";
+      \nBairro: $bairro. \n\nCaso queira mais informações sobre o território, clique no link que direcionará ao google maps. \n$urlGoogleMapas""";
     var tempDir = await getTemporaryDirectory();
     final dio = Dio();
     final response = await dio.get(linkImage,

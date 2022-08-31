@@ -98,7 +98,7 @@ class UserView extends StatelessWidget {
                     children: [
                       Text(listUsers.users[index].username.toString()),
                       Text(
-                        listUsers.users[index].username.toString(),
+                        listUsers.users[index].name.toString(),
                         style: const TextStyle(
                             color: Colors.black54, fontSize: 12),
                       )
