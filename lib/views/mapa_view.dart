@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:cache_manager/core/delete_cache_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:territorio/models/auth_login_response.dart';
 import 'package:territorio/models/mapa.dart';
@@ -15,6 +13,7 @@ import 'package:territorio/states/stateful_wrapper.dart';
 import 'package:territorio/stores/changed_value_drop.dart';
 import 'package:territorio/stores/concluir_designacao_store.dart';
 import 'package:territorio/stores/designacao_add_store.dart';
+import 'package:territorio/widgets/alerta_padrao.dart';
 import 'package:territorio/widgets/amplia_mapa.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -266,12 +265,14 @@ class MapaView extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () {
                       if (item.status == false) {
-                        final designacao = Designacao(
-                            dataDesignacao: DateTime.now().toIso8601String(),
-                            user: User.id(id: loginResponse.idUser),
-                            mapa: Mapa.id(id: item.id));
-                        addDesignacao(designacaoAddStore, loginResponse,
-                            mapaStoreList, context, designacao);
+                        alertaPadrao(context, () {
+                          final designacao = Designacao(
+                              dataDesignacao: DateTime.now().toIso8601String(),
+                              user: User.id(id: loginResponse.idUser),
+                              mapa: Mapa.id(id: item.id));
+                          addDesignacao(designacaoAddStore, loginResponse,
+                              mapaStoreList, context, designacao);
+                        }, "Você está designando um território para você!\nDeseja concluir?");
                       } else if ((item.status == true) &&
                           (item.userAtual == loginResponse.idUser)) {
                         concluirDesignacao(

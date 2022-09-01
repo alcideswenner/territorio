@@ -9,7 +9,6 @@ import 'package:territorio/stores/changed_page_value.dart';
 import 'package:territorio/views/mapa_view.dart';
 import 'package:territorio/views/user_view.dart';
 import 'package:territorio/views/inicio.dart';
-
 import '../states/auth_state.dart';
 import '../states/stateful_wrapper.dart';
 
