@@ -319,7 +319,16 @@ class MapaView extends StatelessWidget {
                   child: const Text(
                     "Abrir no Google Maps",
                     style: TextStyle(fontSize: 15, color: Colors.blue),
-                  ))
+                  )),
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(
+                  item.nomeUserAtual.isNotEmpty
+                      ? "Mapa está com ${item.nomeUserAtual}"
+                      : "",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              )
             ],
           ),
         ),

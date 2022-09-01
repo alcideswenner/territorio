@@ -66,9 +66,13 @@ void compartilhaImagemTexto(String titulo, String bairro, String linkImage,
       \nBairro: $bairro. \n\nCaso queira mais informações sobre o território, clique no link que direcionará ao google maps. \n$urlGoogleMapas""";
     var tempDir = await getTemporaryDirectory();
     final dio = Dio();
-    final response = await dio.get(linkImage,
-        options:
-            Options(responseType: ResponseType.bytes, followRedirects: false));
+    final response = await dio
+        .get("${linkImage.replaceAll(".png", "")}-C.png",
+            options: Options(
+                responseType: ResponseType.bytes, followRedirects: false))
+        .onError((error, stackTrace) => dio.get(linkImage,
+            options: Options(
+                responseType: ResponseType.bytes, followRedirects: false)));
 
     final nmImage = '${tempDir.path}/teste.png';
     File file = File(nmImage);
